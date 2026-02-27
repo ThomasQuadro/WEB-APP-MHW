@@ -12,7 +12,45 @@ Application web Monster Hunter World — suivi de progression, données du jeu.
 | Cache | Redis (TTL 24h) |
 | API données | mhw-db.com |
 
-## Mise en route
+## Lancer avec Docker (recommandé)
+
+### 1. Supabase
+
+1. Crée un projet sur [supabase.com](https://supabase.com)
+2. Exécute `supabase_schema.sql` dans l'éditeur SQL
+3. Récupère tes clés dans Settings → API
+
+### 2. Variables d'environnement
+
+```bash
+cp .env.example .env
+# Remplis SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
+```
+
+### 3. Build et démarrage
+
+```bash
+docker compose up --build
+```
+
+L'app est disponible sur **http://localhost:3000**.
+
+> Nginx sert le frontend et proxifie automatiquement `/api/*` vers le backend.
+> Redis tourne en interne, aucune config supplémentaire nécessaire.
+
+### Commandes utiles
+
+```bash
+docker compose up --build -d     # démarrer en arrière-plan
+docker compose logs -f backend   # logs backend en temps réel
+docker compose logs -f frontend  # logs nginx
+docker compose down              # arrêter
+docker compose down -v           # arrêter + supprimer les volumes Redis
+```
+
+---
+
+## Lancer en local (sans Docker)
 
 ### 1. Supabase
 
@@ -63,7 +101,10 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 
 ```
 .
+├── docker-compose.yml
+├── .env.example
 ├── backend/
+│   ├── Dockerfile
 │   └── src/
 │       ├── config/         supabase.js, redis.js
 │       ├── middleware/     auth.js (JWT Supabase)
@@ -71,6 +112,8 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 │       ├── services/       mhwApi.js (fetch + cache Redis)
 │       └── index.js
 ├── frontend/
+│   ├── Dockerfile          (multi-stage : build Vite → Nginx)
+│   ├── nginx.conf          (SPA routing + proxy /api → backend)
 │   └── src/
 │       ├── components/     Navbar, PrivateRoute, Loader, ErrorMessage
 │       ├── contexts/       AuthContext.jsx
